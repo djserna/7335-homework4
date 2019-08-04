@@ -31,6 +31,10 @@ plt.rcParams['font.size'] = 14
 # Printing out all outputs
 InteractiveShell.ast_node_interactivity = 'all'
 
+useGPUForTraining = False
+multipleGPUsAvailable = False
+selectedModel = None
+numberOfInputs = None
 
 def setParameters():
     print("Initialize program parameters.")
@@ -41,8 +45,40 @@ def eda():
 def dataAugmentation():
     print("Image transformation.")
     
-def loadPreTrainedModel():
-    print("load in the pre-trained model from pytorch.")
+def loadPreTrainedModel(modelName):
+    if (modelName == "vgg16"):
+        selectedModel = models.vgg16(pretrained=True)
+        numberOfInputs = selectedModel.classifier[6].in_features
+    elif (modelName == "vgg19"):
+        selectedModel = models.vgg19(pretrained=True)
+        numberOfInputs = selectedModel.classifier[6].in_features
+    elif (modelName == "resnet50"):
+        selectedModel = models.resnet50(pretrained=True)
+        numberOfInputs = selectedModel.fc.in_features
+    elif (modelName == "squeezenet1_0"):
+        selectedModel = models.squeezenet1_0(pretrained=True)
+         #not sure this is accurate but closest I could find for in_features on this model
+        numberOfInputs = len(selectedModel.features)
+    elif (modelName == "squeezenet1_1"):
+        selectedModel = models.squeezenet1_1(pretrained=True)
+        #not sure this is accurate but closest I could find for in_features on this model
+        numberOfInputs = len(selectedModel.features)
+    elif (modelName == "Inception3"):
+        selectedModel = models.inception_v3(pretrained=True)
+        numberOfInputs = selectedModel.fc.in_features
+    
+    for parameter in selectedModel.parameters():
+        parameter.requires_grad = False #not sure why we do this.
+        
+    
+    if useGPUForTraining == True:
+        selectedModel = selectedModel.to('cuda')
+    
+    if multipleGPUsAvailable == True:
+        selectedModel = nn.DataParallel(selectedModel)
+    
+    print(selectedModel)
+    print(numberOfInputs)
     
 def adjustClassifiers():
     print("use our own custom classifiers.")
@@ -53,6 +89,6 @@ def displayResults():
 setParameters();
 eda();
 dataAugmentation();
-loadPreTrainedModel();
+loadPreTrainedModel("vgg19");
 adjustClassifiers();
 displayResults();
